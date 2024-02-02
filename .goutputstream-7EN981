@@ -1,0 +1,121 @@
+
+import sys
+import os
+
+from PyQt5.QtGui import *
+from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication,QSizeGrip
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import *
+
+from PyQt5 import *
+from PyQt5 import uic
+
+from driver.video import VideoThread
+import numpy as np
+import cv2
+
+
+class UI(QMainWindow):
+        def __init__(self):
+
+                super(UI, self).__init__()  # Call the inherited classes __init__ method
+
+                self.ui = uic.loadUi('menu.ui', self)  # Load the .ui file
+
+                # self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+                self.showMaximized()
+                # self.showFullScreen()
+                # self.setWindowFlag(QtCore.Qt.Tool)
+                self.setWindowOpacity(1)
+
+                self.setWindowTitle('Dashboard')
+                # self.setWindowIcon(QIcon('UI/aset/icon/logo.png'))
+
+                # size grip
+                self.gripSize = 10
+                self.grip =QSizeGrip(self)
+                self.grip.resize(self.gripSize, self.gripSize)
+
+                 #stacked init
+                self.stacked_page_init()    
+
+                #buton init
+                self.button_init()
+                
+                #label init
+                self.label_init()
+
+
+                # self.resizeEvent = self.label_camera_resize
+                # self.label_camera.resizeEvent =self.camera_resize
+                
+                #table_init
+                self.table_init()
+
+                self.combo_box_init()
+                self.frame_init()
+
+                #load model 
+                
+                self.camera_1 = VideoThread(source=10,model_path="yolov8n/best320.onnx")
+                self.camera_1.start()
+                self.camera_1.change_pixmap_signal.connect(self.update_image)
+
+                self.camera_2 = VideoThread(source='vid3.mp4',model_path="yolov8n/best320.onnx")
+                self.camera_2.start()
+                self.camera_2.change_pixmap_signal.connect(self.update_image)
+
+                self.show()  # Show the GUI
+        
+        def frame_init(self):
+                pass
+
+        @pyqtSlot(np.ndarray)
+        def update_image(self, cv_img):
+                """Updates the image_label with a new opencv image"""
+                qt_img= self.convert_cv_qt(cv_img)
+                self.label_camera_1.setPixmap(qt_img)
+        
+        def convert_cv_qt(self, cv_img):
+                rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+                h, w, ch = rgb_image.shape
+                bytes_per_line = ch *w
+                convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                p = convert_to_Qt_format.scaled(640, 640, Qt.KeepAspectRatio)
+                return QPixmap.fromImage(p)
+        
+        
+        def combo_box_init(self):
+              pass   
+
+        def button_init(self):
+                pass
+        
+        def label_init(self):
+              self.label_camera_1 = self.findChild(QLabel,'label_camera')
+              self.label_camera_2 = self.findChild(QLabel,'label_camera2')
+
+        def table_init(self):
+                pass
+
+        def stacked_page_init(self):
+                pass
+
+if __name__ == '__main__':
+        try:
+                # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+                # app = QApplication([])  # Create an instance of QtWidgets.QApplication
+                app = QApplication(sys.argv)
+                window = UI()  # Create an instance of our class
+                app.exec_()  # Start the application
+
+        except Exception as errormsg:
+                print('ui ', errormsg)
+
+
+
+
+
+
